@@ -49,7 +49,7 @@
 
 function showMainForm($numOfStd, $numOfSub, $subjectsArray,  $scores = []){
     echo "<div id='form_students' class='container mt-5'>
-    <form action='/assignment6/phase1.php?students=$numOfStd&subjects=$numOfSub' method='POST'>";
+    <form action='/assignment6/phase1.php?students='$numOfStd&subjects=$numOfSub' method='POST'>";
 
     echo "<input hidden name='subjectNEXT' value= " . json_encode($subjectsArray) . "> ";// to keep values even after submitting
     for ($i = 0; $i < $numOfStd; $i++) {
@@ -64,7 +64,6 @@ function showMainForm($numOfStd, $numOfSub, $subjectsArray,  $scores = []){
 
 }
 
-
 function showSubForm($numOfSub, $numOfStd, $subjects = [])
 {
     echo '<div id="form_subjects" class="container mt-5">';
@@ -77,6 +76,37 @@ function showSubForm($numOfSub, $numOfStd, $subjects = [])
     }
 
     echo '<button type="submit" class="btn btn-primary">Submit</button></form></div>';
+}
+
+function showMainFormSession($totalSubjects,$totalStudents,$subjectsArray,$marksArray){
+    echo "<div id='form_students' class='container mt-5'>
+    <form action='/assignment6/phase1.php method='POST'>";
+
+    for ($i = 0; $i < $totalStudents; $i++) {
+        echo '<h2>Student ' . $i + 1 . '</h2>';
+        for ($j = 0; $j < $totalSubjects; $j++) 
+        {
+            $scoreValue = isset($marksArray[$i][$j]) ? $marksArray[$i][$j] : '';
+            echo "<div class='mt-5'><input type='number' name='score[$i][$j]' max='100' min='1' step='0.5' class='form-control' placeholder='Enter $subjectsArray[$j] score' value=" . (isset($_SESSION['score'])?$_SESSION['score'][$i][$j]:'') . " required> <hr></div>";
+        }
+    }
+    echo '<button type="submit" class="btn btn-primary">Submit</button></form></div>';
+
+}
+
+function showSubFormSession($totalSubjects,$totalStudents,$subjectsArray,$marksArray)
+{
+    echo '<div id="form_subjects" class="container mt-5">';
+    echo "<form action='/assignment6/phase1.php' method='POST'>";
+    for ($i = 0; $i < $totalSubjects; $i++) {
+        echo '<br>';
+    
+        echo "<div class='mt-5'><input type='text' name='subjectsArray[]' id='subject' class='form-control' placeholder='Enter name for subject ".($i+1)."' value='" . (isset($_SESSION['subjectsArray'])?$_SESSION['subjectsArray'][$i]:'') . "' required>";
+        isset($_SESSION['subjectsArray']);
+    }
+
+    echo '<button type="submit" class="btn btn-primary">Submit</button></form></div>';
+    showMainFormSession($totalSubjects,$totalStudents,$subjectsArray,$marksArray);
 }
 
 
@@ -113,8 +143,8 @@ function export_to_csv($subjects,$scores)//no of students,subjects and scores ar
 function import_from_csv(){
     if(isset($_FILES)){
         $tmpFilePath = $_FILES["csvFile"]['tmp_name'];
-        // echo $_FILES["csvFile"]["name"].'<br>';
-        $score = array();
+
+        $score = array();   
         $i=1;
         
         $handle = fopen($tmpFilePath,'r');
@@ -124,13 +154,44 @@ function import_from_csv(){
             $score[] = $data;
             $i++;
         }   
-        
-        // echo count($subjectsArray).'<br>';
-        // print_r($score[0]);
-        $_SESSION['subjects']= $subjectsArray;
-        $_SESSION['marks']= $score;
-        // $_SESSION['fileName'] = $fileName;
+
+        $_SESSION['subjectsArray']= $subjectsArray;
+        $_SESSION['score']= $score;
     }
     
 }
+
+// function createTable($subjectsArray,$scoreArray){
+//     $students = count($scoreArray);
+//     $subjects = count($subjectsArray);
+//     $i=0;
+
+// echo "    <table>
+//                 <th>
+//                 ";for($i=0;$i<1;$i++){
+//                     "<tr>";
+//                     for($j=0;$j<$subjects;$j++){
+//                         "<td>";
+//                             $subjectsArray[$i][$j];
+//                         "</td>";
+//                     };"
+//                     </tr>
+//                 </th>";
+//                 };
+
+// echo "          <tbody>";for($i=1;$i<$students;$i++){"
+//                         <tr>";
+//                             for($j=0;$j<$subjects;$j++){
+//                                 "<td>";
+//                                     $scoreArray[$i][$j];
+//                                 "</td>";
+//                             };"
+//                         </tr>";
+// }
+//                 "</tbody>
+
+//            </table>";
+
+// }
+
 ?>
