@@ -16,7 +16,6 @@ if(isset($_POST['csvImport'])){
 if ($_SERVER['REQUEST_METHOD'] == 'GET' && !isset($_GET['students']) && !isset($_GET['subjects']) && isset($_FILES)) {
     if (session_status() === PHP_SESSION_ACTIVE){
         session_unset();
-        // initializationForm();
     }
 }
 ?>
@@ -43,8 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && !isset($_GET['students']) && !isset($
                     if(isset($_GET["students"])){
                         echo $_GET["students"];
                         }
-                        elseif(!empty($_SESSION['marks'])){
-                            $students = $_SESSION['marks'];
+                        elseif(!empty($_SESSION['score'])){
+                            $students = $_SESSION['score'];
                             echo count($students);
                         }
                         else{
@@ -59,8 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && !isset($_GET['students']) && !isset($
                     if(isset($_GET["subjects"])){
                             echo $_GET["subjects"];
                         }
-                        elseif(!empty($_SESSION['subjects'])){
-                            $subjects = $_SESSION['subjects'];
+                        elseif(!empty($_SESSION['subjectsArray'])){
+                            $subjects = $_SESSION['subjectsArray'];
                             echo count($subjects);
                         }
                         else{
@@ -69,9 +68,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && !isset($_GET['students']) && !isset($
             <button type="submit" class="btn btn-primary mt-4">Submit</button>
         </form>
 
+        <!-- form for csv input -->
         <form action="/assignment6/phase1.php" class="container mt-5" method="POST" enctype="multipart/form-data">
         <label for="inputCsv">Choose a csv file: </label><br>
-        <input type="file" id="inputCsv" name="csvFile" accept=".csv"  value="<?php echo isset($_SESSION['fileName']) ? $_SESSION['fileName'] : '' ;?>" required>
+        <input type="file" name="csvFile" accept=".csv" required>
         <button type="submit" name="csvImport" class="btn btn-primary mt-4">Submit</button>
         </form>
     </div>
@@ -79,58 +79,56 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && !isset($_GET['students']) && !isset($
 
 
     <?php   
-
+//do this if the request method is GET and students is set and subjectsArray is not
     if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['students']) && !isset($_POST['subjectsArray'])) {
         $numOfStd = $_GET['students'];
         $numOfSub = $_GET['subjects'];
-        // initializationForm();
         showSubForm($numOfSub, $numOfStd);
 
     }
+//do this if the request method is POST
+    if ($_SERVER['REQUEST_METHOD'] == 'POST'){
+         if(isset($_GET['students']) && isset($_POST['subjectsArray'])) {
+            $numOfStd = $_GET['students'];
+            $numOfSub = $_GET['subjects'];
 
-    if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_GET['students']) && !isset($_POST['subjectsArray'])) {
-        $numOfStd = $_GET['students'];
-        $numOfSub = $_GET['subjects'];
-
-        if(isset($_POST['subjectsArray'])){
-            $_SESSION["subjectsArray"]= $_POST['subjectsArray']; 
-            // initializationForm();
+    // this logic is contradicting with above if condition
+        if(isset($_POST['subjectsArray']) && isset($_POST['studentsNameArray'])){
+            $_SESSION["subjectsArray"]= $_POST['subjectsArray'];
+            $_SESSION["studentsNameArray"]= $_POST['studentsNameArray'];
             showSubForm($numOfSub, $numOfStd);
-            showMainForm($numOfStd, $numOfSub, $_POST['subjectsArray']);
+            showMainForm($numOfStd, $numOfSub,$_POST['subjectsArray'],$_SESSION['studentsNameArray']);
         }
-        
+            
         if(isset($_POST['score'])){
-            if(!empty($_SESSION['score'])){
-                $_SESSION['score']= $_POST['score'];
-            }
-            $subjectsArray = $_POST['subjectNEXT']?$_POST['subjectNEXT']:$_SESSION["subjectsArray"];
+            $_SESSION['score']= $_POST['score'];
+            
+            $subjectsArray = $_POST['subjectNEXT'];
             if(is_string($subjectsArray)){
                 $subjectsArray = json_decode($subjectsArray, true);
             }
             // initializationForm();
             showSubForm($numOfSub, $numOfStd);
-            showMainForm($numOfStd, $numOfSub, $_SESSION["subjectsArray"], $_POST['score']);
+            showMainForm($numOfStd, $numOfSub, $_SESSION["subjectsArray"],$_SESSION["studentsNameArray"], $_POST['score']);
+            
+            displayExportBtn(); 
+            var_dump("main form submitted in phase 1");
 
-            $subjectsArray=!empty($_SESSION['subjectsArray'])?$_SESSION['subjectsArray']:[];
-            $scoreArray=!empty($_SESSION['score'])?$_SESSION['score']:[];
-
-            displayExportBtn();           
-
-            // createTable($subjectsArray,$scoreArray);
         }
-        
-        
+            
+            
         if (isset($_POST['exportToCsv'])){
-            // initializationForm();
             showSubForm($numOfSub, $numOfStd);
-            showMainForm($numOfStd, $numOfSub, $_SESSION['subjectsArray'],$_SESSION['score']);  
-            export_to_csv($_SESSION['subjectsArray'],$_SESSION['score']);
+            showMainForm($numOfStd, $numOfSub, $_SESSION['subjectsArray'],$_SESSION["studentsNameArray"],$_SESSION['score']);  
+            export_to_csv($_SESSION['subjectsArray'],$_SESSION["studentsNameArray"],$_SESSION['score']);
             displayExportBtn();
 
         }
     }
 
-    if($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_SESSION['subjects'])&&!empty($_SESSION['marks'])){
+}
+    //operation if the csv file is given as input
+    if($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_SESSION['subjectsArray'])&&!empty($_SESSION['score'])){
         $subjectsArray=$_SESSION["subjectsArray"];
         $scoreArray=$_SESSION["score"];
         $totalSubjects = count($_SESSION["subjectsArray"]);
