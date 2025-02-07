@@ -49,18 +49,18 @@
 
 function showMainForm($numOfStd, $numOfSub,$subjectsArray,$studentsNameArray, $scores = []){
     echo "<div id='form_students' class='container mt-5'>
-    <form action='/assignment6/phase1.php?students='$numOfStd&subjects=$numOfSub' method='POST'>";
+    <form action='/assignment6/phase1.php?students=$numOfStd&subjects=$numOfSub' method='POST'>";
 
     echo "<input hidden name='subjectNEXT' value= " . json_encode($subjectsArray) . "> ";// to keep values even after submitting
     for ($i = 0; $i < $numOfStd; $i++) {
-        echo '<h2>Student ' . $studentsNameArray[$i] . '</h2>';
+        echo '<h2>Scores of ' . $studentsNameArray[$i] . '</h2>';
         for ($j = 0; $j < $numOfSub; $j++) 
         {
             $scoreValue = isset($scores[$i][$j]) ? $scores[$i][$j] : '';
-            echo "<div class='mt-5'><input type='number' name='score[$i][$j]' max='100' min='1' step='0.5' class='form-control' placeholder='Enter $subjectsArray[$j] score' value=" . (isset($_SESSION['score'])?$_SESSION['score'][$i][$j]:'') . " required> <hr></div>";
+            echo "<div class='mt-5'><input type='number' name='score[$i][$j]' style='width:200px' max='100' min='1' step='0.5' class='form-control' placeholder='Enter $subjectsArray[$j] score' value='" . (isset($_SESSION['score'])?$_SESSION['score'][$i][$j]:'') . "' required> <hr></div>";
         }
     }
-    echo '<button type="submit" class="btn btn-primary">Submit</button></form></div>';
+    echo '<button type="submit" class="btn btn-primary">Export To Csv</button></form></div>';
 
 }
 
@@ -71,8 +71,7 @@ function showSubForm($numOfSub, $numOfStd, $subjects = [])
     echo '<h2>Enter students Name: </h2>';
 
     for ($i = 0; $i < $numOfStd; $i++) {
-    
-        echo "<div class='mt-5'><input type='text' name='studentsNameArray[]' id='subject' class='form-control' placeholder='Name for student ".($i+1)."' value='" . (isset($_SESSION['studentsNameArray'])?$_SESSION['studentsNameArray'][$i]:'') . "' required>";
+        echo "<div class='mt-5'><input type='text' name='studentsNameArray[]' class='form-control' placeholder='Name for student ".($i+1)."' value='" . (isset($_SESSION['studentsNameArray'])?$_SESSION['studentsNameArray'][$i]:'') . "' required>";
         isset($_SESSION['studentsNameArray']);
     }
 
@@ -90,16 +89,16 @@ function showSubForm($numOfSub, $numOfStd, $subjects = [])
 }
 
 
-function showMainFormSession($totalSubjects,$totalStudents,$subjectsArray,$marksArray){
+function showMainFormSession($totalSubjects,$totalStudents,$subjectsArray,$studentsNameArray,$marksArray){
     echo "<div id='form_students' class='container mt-5'>
     <form action='/assignment6/phase1.php' method='POST'>";
 
     for ($i = 0; $i < $totalStudents; $i++) {
-        echo '<h2>Student ' . $i + 1 . '</h2>';
+        echo '<h2>Scores of ' . $studentsNameArray[$i] . '</h2>';
         for ($j = 0; $j < $totalSubjects; $j++) 
         {
             $scoreValue = isset($marksArray[$i][$j]) ? $marksArray[$i][$j] : '';
-            echo "<div class='mt-5'><input type='number' name='score[$i][$j]' max='100' min='1' step='0.5' class='form-control' placeholder='Enter $subjectsArray[$j] score' value=" . (isset($_SESSION['score'])?$_SESSION['score'][$i][$j]:'') . " required> <hr></div>";
+            echo "<div class='mt-5'><input type='number' name='score[$i][$j]' style'width:200px' max='100' min='1' step='0.5' class='form-control' placeholder='Enter $subjectsArray[$j] score' value=" . (isset($_SESSION['score'])?$_SESSION['score'][$i][$j]:'') . " required> <hr></div>";
         }
     }
     echo '<button type="submit" name="mainFormButton" class="btn btn-primary">Submit</button></form></div>';
@@ -109,52 +108,61 @@ function showMainFormSession($totalSubjects,$totalStudents,$subjectsArray,$marks
         if(isset($_POST["mainFormButton"])){
             $subjectsArray = $_SESSION["subjectsArray"];
             $scoreArray = $_SESSION["score"];
-            createTable($subjectsArray,$scoreArray);
+            createTable($subjectsArray,$studentsNameArray,$scoreArray);
         }
     }
+
+    echo "<div><form action='/assignment6/phase1.php' method='POST'>
+        <input type='text' name='stdName'>
+        <button type='submit'>Generate</button>
+        </form></div>";
 }
 
-function showSubFormSession($totalSubjects,$totalStudents,$subjectsArray,$marksArray)
+function showSubFormSession($totalSubjects,$totalStudents,$subjectsArray,$studentsNameArray,$marksArray)
 {
-    echo '<div id="form_subjects" class="container mt-5">';
+    echo '<div id="form_subjects_students" class="container mt-5">';
     echo "<form action='/assignment6/phase1.php' method='POST'>";
+    echo '<h2>Enter students Name: </h2>';
+
+    for ($i = 0; $i < $totalStudents; $i++) {
+        echo "<div class='mt-5'><input type='text' name='studentsNameArray[]' class='form-control' placeholder='Name for student ".($i+1)."' value='" . (isset($_SESSION['studentsNameArray'][$i])?$_SESSION['studentsNameArray'][$i]:'') . "' required>";
+        isset($_SESSION['studentsNameArray']);
+    }
+
+    echo '<br><br>';
+
+    echo '<h2>Enter subjects Name: </h2>';
+
     for ($i = 0; $i < $totalSubjects; $i++) {
-        echo '<br>';
     
-        echo "<div class='mt-5'><input type='text' name='subjectsArray[]' id='subject' class='form-control' placeholder='Enter name for subject ".($i+1)."' value='" . (isset($_SESSION['subjectsArray'])?$_SESSION['subjectsArray'][$i]:'') . "' required>";
+        echo "<div class='mt-5'><input type='text' name='subjectsArray[]' class='form-control' placeholder='Name for subject ".($i+1)."' value='" . (isset($_SESSION['subjectsArray'])?$_SESSION['subjectsArray'][$i]:'') . "' required>";
         isset($_SESSION['subjectsArray']);
     }
 
     echo '<button type="submit" class="btn btn-primary">Submit</button></form></div>';
-    showMainFormSession($totalSubjects,$totalStudents,$subjectsArray,$marksArray);
+
+    showMainFormSession($totalSubjects,$totalStudents,$subjectsArray,$studentsNameArray,$marksArray);
     
 }
 
-
-function displayExportBtn()
-{
-    echo "<div>";
-    echo '<form action="" method="POST">';
-    echo "<input type='hidden' name='exportToCsv'>";
-    echo '<button type="submit" class="btn btn-primary">Export to CSV</button>';
-    echo '</form>';
-    echo '</div>';
-}
-
-function export_to_csv($subjects,$scores)//no of students,subjects and scores are required
+function export_to_csv($subjectsArray,$studentsNameArray,$scoresArray)//no of students,subjects and scores are required
 {   
     $headers=[];
+    $i=0;
     
-    foreach ($subjects as $sub) {
+    $headers[] = "Students";
+    foreach ($subjectsArray as $sub) {
         $headers[] = $sub;
     }
     ;
     $fh = fopen("file.csv", "w");
     fputcsv($fh, $headers, ',', '\\', '"');
-
+    
     try {
-        foreach ($scores as $fields) {
+        foreach ($scoresArray as $fields) {
+            array_unshift($fields,$studentsNameArray[$i]);            
             fputcsv($fh, $fields, ',', '\\', '"');
+            $i++;
         }
     } catch (Exception $e) {
     }
@@ -165,42 +173,71 @@ function export_to_csv($subjects,$scores)//no of students,subjects and scores ar
 function import_from_csv(){
     if(isset($_FILES)){
         $tmpFilePath = $_FILES["csvFile"]['tmp_name'];
-
+        $headers = [];
+        $studentsNameArray=[];
         $score = array();   
         $i=1;
         
         $handle = fopen($tmpFilePath,'r');
-    
-        $subjectsArray= fgetcsv($handle,1000,",","\"","\\");
-        while(($data = fgetcsv($handle,1000,",","\"","\\"))){
-            $score[] = $data;
-            $i++;
-        }   
+        $headers= fgetcsv($handle,1000,",","\"","\\");  
+        $subjectsArray= array_slice($headers,1,count($headers));
 
+        while(($data = fgetcsv($handle,1000,",","\"","\\"))){
+            $studentsNameArray[]=array_splice($data,0,1)[0];
+            $score[] = $data;
+        } 
+
+        $_SESSION['headers'] = $headers;
+        $_SESSION['studentsNameArray'] =  $studentsNameArray;
         $_SESSION['subjectsArray']= $subjectsArray;
         $_SESSION['score']= $score;
     }
     
 }
 
-function createTable($subjectsArray,$scoreArray){
+function createTable($subjectsArray,$studentsNameArray,$scoreArray){
     $studentsCount = count($scoreArray);
     $subjectsCount = count($subjectsArray);
 
 echo "<table border='1'><tr>";for($i=0;$i<1;$i++){
+    echo"<th colspan='1'>Students</th>";
     for($j=0;$j<$subjectsCount;$j++){
             echo"<th colspan='1'>".$subjectsArray[$j]."</th>";
         }
         echo"</tr>";
     };
 
-echo"<tbody>";for($i=1;$i<$studentsCount;$i++){
-echo"<tr>";for($j=0;$j<$subjectsCount;$j++){
+echo"<tbody>";for($i=0;$i<$studentsCount;$i++){
+    echo"<tr><td>".$studentsNameArray[$i]."</td>";for($j=0;$j<$subjectsCount;$j++){
                     echo"<td>".$scoreArray[$i][$j]."</td>";
                 }
 echo"</tr>";
 }
 echo"</tbody></table>";
+}
+
+function generateMarksheet($stdName){
+    $subCount = count($_SESSION['subjectsArray']);
+
+    $key =  array_search($stdName,$_SESSION['studentsNameArray']);
+
+    echo "<table border='1'><tr><th colspan='1'>Subjects</th><th colspan='1'>Total Marks</th><th colspan='1'>Marks Obtained</th></tr>";
+    
+    echo"<tbody>";for($i=0;$i<$subCount;$i++){
+        echo"<tr><td>".$_SESSION['subjectsArray'][$i]."</td>";
+        echo"<td>100</td>";
+        echo"<td>".$_SESSION['score'][$key][$i]."</td>";
+        echo"</tr>";
+    }
+    echo "<tr colspan='1'><td>Total: </td>";
+    echo "<td>".($subCount*100)."</td>";
+    echo "<td>".array_sum($_SESSION['score'][$key])."</td></tr>";
+
+    echo "<tr colspan='1'><td>Percentage: </td>";
+    echo "<td colspan='2' >".((array_sum($_SESSION['score'][$key])/($subCount*100))*100)."%</td>";
+    echo"</tbody></table>";
+
+
 }
 
 ?>

@@ -23,8 +23,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && !isset($_GET['students']) && !isset($
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"> -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="phase1.css">
     <title>Document</title>
 </head>
@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && !isset($_GET['students']) && !isset($
         <!-- form for csv input -->
         <form action="/assignment6/phase1.php" class="container mt-5" method="POST" enctype="multipart/form-data">
         <label for="inputCsv">Choose a csv file: </label><br>
-        <input type="file" name="csvFile" accept=".csv" required>
+        <input type="file" name="csvFile" accept=".csv" id="inputCsv" required>
         <button type="submit" name="csvImport" class="btn btn-primary mt-4">Submit</button>
         </form>
     </div>
@@ -88,11 +88,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && !isset($_GET['students']) && !isset($
     }
 //do this if the request method is POST
     if ($_SERVER['REQUEST_METHOD'] == 'POST'){
+
          if(isset($_GET['students']) && isset($_POST['subjectsArray'])) {
             $numOfStd = $_GET['students'];
             $numOfSub = $_GET['subjects'];
 
-    // this logic is contradicting with above if condition
+            // displays the main form after subects and students name are provided
         if(isset($_POST['subjectsArray']) && isset($_POST['studentsNameArray'])){
             $_SESSION["subjectsArray"]= $_POST['subjectsArray'];
             $_SESSION["studentsNameArray"]= $_POST['studentsNameArray'];
@@ -100,40 +101,38 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && !isset($_GET['students']) && !isset($
             showMainForm($numOfStd, $numOfSub,$_POST['subjectsArray'],$_SESSION['studentsNameArray']);
         }
             
-        if(isset($_POST['score'])){
-            $_SESSION['score']= $_POST['score'];
-            
-            $subjectsArray = $_POST['subjectNEXT'];
-            if(is_string($subjectsArray)){
-                $subjectsArray = json_decode($subjectsArray, true);
-            }
-            // initializationForm();
-            showSubForm($numOfSub, $numOfStd);
-            showMainForm($numOfStd, $numOfSub, $_SESSION["subjectsArray"],$_SESSION["studentsNameArray"], $_POST['score']);
-            
-            displayExportBtn(); 
-            var_dump("main form submitted in phase 1");
+    }
+    //after main Form is submitted 
+    if(isset($_POST['score']) && isset($_GET['students']) && isset($_GET['subjects'])){ 
 
-        }
-            
-            
-        if (isset($_POST['exportToCsv'])){
-            showSubForm($numOfSub, $numOfStd);
-            showMainForm($numOfStd, $numOfSub, $_SESSION['subjectsArray'],$_SESSION["studentsNameArray"],$_SESSION['score']);  
-            export_to_csv($_SESSION['subjectsArray'],$_SESSION["studentsNameArray"],$_SESSION['score']);
-            displayExportBtn();
+        $numOfStd = $_GET['students'];
+        $numOfSub = $_GET['subjects'];
 
+        $_SESSION['score']= $_POST['score'];
+        $subjectsArray = $_POST['subjectNEXT'];
+
+        if(is_string($subjectsArray)){
+            $subjectsArray = json_decode($subjectsArray, true);
         }
+
+        showSubForm($numOfSub, $numOfStd);
+        showMainForm($numOfStd, $numOfSub, $_SESSION["subjectsArray"],$_SESSION["studentsNameArray"], $_POST['score']);
+        export_to_csv($_SESSION['subjectsArray'],$_SESSION["studentsNameArray"],$_SESSION['score']);
+
     }
 
 }
-    //operation if the csv file is given as input
+    // operation if the csv file is given as input
     if($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_SESSION['subjectsArray'])&&!empty($_SESSION['score'])){
+        $studentsNameArray = $_SESSION['studentsNameArray'];
         $subjectsArray=$_SESSION["subjectsArray"];
         $scoreArray=$_SESSION["score"];
         $totalSubjects = count($_SESSION["subjectsArray"]);
         $totalStudents = count($_SESSION["score"]);
-        showSubFormSession($totalSubjects,$totalStudents,$subjectsArray,$scoreArray);
+        showSubFormSession($totalSubjects,$totalStudents,$subjectsArray,$studentsNameArray,$scoreArray);
+        if(!empty($_POST['stdName'])){
+            generateMarksheet($_POST['stdName']);
+        }
     }
     ?>
 </body>
