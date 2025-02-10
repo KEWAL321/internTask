@@ -71,7 +71,7 @@ function showSubForm($numOfSub, $numOfStd, $subjects = [])
     echo '<h2>Enter students Name: </h2>';
 
     for ($i = 0; $i < $numOfStd; $i++) {
-        echo "<div class='mt-5'><input type='text' name='studentsNameArray[]' class='form-control' placeholder='Name for student ".($i+1)."' value='" . (isset($_SESSION['studentsNameArray'])?$_SESSION['studentsNameArray'][$i]:'') . "' required>";
+        echo "<div class='mt-5'><input type='text' name='studentsNameArray[]' class='form-control' placeholder='Student ".($i+1)."' value='" . (isset($_SESSION['studentsNameArray'])?$_SESSION['studentsNameArray'][$i]:'') . "' required>";
         isset($_SESSION['studentsNameArray']);
     }
 
@@ -81,11 +81,11 @@ function showSubForm($numOfSub, $numOfStd, $subjects = [])
 
     for ($i = 0; $i < $numOfSub; $i++) {
     
-        echo "<div class='mt-5'><input type='text' name='subjectsArray[]' id='subject' class='form-control' placeholder='Name for subject ".($i+1)."' value='" . (isset($_SESSION['subjectsArray'])?$_SESSION['subjectsArray'][$i]:'') . "' required>";
+        echo "<div class='mt-5'><input type='text' name='subjectsArray[]' id='subject' class='form-control' placeholder='Subject ".($i+1)."' value='" . (isset($_SESSION['subjectsArray'])?$_SESSION['subjectsArray'][$i]:'') . "' required>";
         isset($_SESSION['subjectsArray']);
     }
 
-    echo '<button type="submit" class="btn btn-primary">Submit</button></form></div>';
+    echo "<button type='submit' style='margin-top:30px;' class='btn btn-primary'>Submit</button></form></div>";
 }
 
 
@@ -112,9 +112,9 @@ function showMainFormSession($totalSubjects,$totalStudents,$subjectsArray,$stude
         }
     }
 
-    echo "<div><form action='/assignment6/phase1.php' method='POST'>
-        <input type='text' name='stdName'>
-        <button type='submit'>Generate</button>
+    echo "<div style='margin-top:30px;' ><form action='/assignment6/phase1.php' method='POST'>
+        <input type='text' name='stdName' placeholder='Enter student valid name to generate marksheet' id='generateInput' value='".(isset($_SESSION['stdName'])?$_SESSION['stdName']:''). "' required>
+        <button type='submit' id='generate' class='btn btn-primary'>Generate</button>
         </form></div>";
 }
 
@@ -125,7 +125,7 @@ function showSubFormSession($totalSubjects,$totalStudents,$subjectsArray,$studen
     echo '<h2>Enter students Name: </h2>';
 
     for ($i = 0; $i < $totalStudents; $i++) {
-        echo "<div class='mt-5'><input type='text' name='studentsNameArray[]' class='form-control' placeholder='Name for student ".($i+1)."' value='" . (isset($_SESSION['studentsNameArray'][$i])?$_SESSION['studentsNameArray'][$i]:'') . "' required>";
+        echo "<div class='mt-5'><input type='text' name='studentsNameArray[]' class='form-control' placeholder='Student ".($i+1)."' value='" . (isset($_SESSION['studentsNameArray'][$i])?$_SESSION['studentsNameArray'][$i]:'') . "' required>";
         isset($_SESSION['studentsNameArray']);
     }
 
@@ -135,7 +135,7 @@ function showSubFormSession($totalSubjects,$totalStudents,$subjectsArray,$studen
 
     for ($i = 0; $i < $totalSubjects; $i++) {
     
-        echo "<div class='mt-5'><input type='text' name='subjectsArray[]' class='form-control' placeholder='Name for subject ".($i+1)."' value='" . (isset($_SESSION['subjectsArray'])?$_SESSION['subjectsArray'][$i]:'') . "' required>";
+        echo "<div class='mt-5'><input type='text' name='subjectsArray[]' class='form-control' placeholder='Subject ".($i+1)."' value='" . (isset($_SESSION['subjectsArray'])?$_SESSION['subjectsArray'][$i]:'') . "' required>";
         isset($_SESSION['subjectsArray']);
     }
 
@@ -221,23 +221,31 @@ function generateMarksheet($stdName){
 
     $key =  array_search($stdName,$_SESSION['studentsNameArray']);
 
-    echo "<table border='1'><tr><th colspan='1'>Subjects</th><th colspan='1'>Total Marks</th><th colspan='1'>Marks Obtained</th></tr>";
-    
-    echo"<tbody>";for($i=0;$i<$subCount;$i++){
-        echo"<tr><td>".$_SESSION['subjectsArray'][$i]."</td>";
-        echo"<td>100</td>";
-        echo"<td>".$_SESSION['score'][$key][$i]."</td>";
-        echo"</tr>";
+    $html = "<table border='1'><tr><th>Subjects</th><th>Total Marks</th><th>Marks Obtained</th></tr>";
+
+    $html .= "<tbody>";
+    for ($i = 0; $i < $subCount; $i++) {
+    $html .= "<tr><td>" . $_SESSION['subjectsArray'][$i] . "</td>";
+    $html .= "<td>100</td>";
+    $html .= "<td>" . $_SESSION['score'][$key][$i] . "</td></tr>";
     }
-    echo "<tr colspan='1'><td>Total: </td>";
-    echo "<td>".($subCount*100)."</td>";
-    echo "<td>".array_sum($_SESSION['score'][$key])."</td></tr>";
 
-    echo "<tr colspan='1'><td>Percentage: </td>";
-    echo "<td colspan='2' >".((array_sum($_SESSION['score'][$key])/($subCount*100))*100)."%</td>";
-    echo"</tbody></table>";
+    $totalMarks = $subCount * 100;
+    $obtainedMarks = array_sum($_SESSION['score'][$key]);
+    $percentage = ($obtainedMarks / $totalMarks) * 100;
+
+    $html .= "<tr><td>Total: </td><td>$totalMarks</td><td>$obtainedMarks</td></tr>";
+    $html .= "<tr><td>Percentage: </td><td colspan='2'>$percentage%</td></tr>";
+
+    $html .= "</tbody></table>";
+
+    echo $html; 
+     $_SESSION['marksheet'] = $html; 
 
 
+    echo "<form action='' method='POST' style=' margin-top: 20px;' >
+    <input type='hidden' name='marksheetOwner' value='$stdName'>
+    <input type='email' placeholder='send email to' name='email' id='sendEmailInput' value='".(isset($_POST['email'])?$_POST['email']:'')."' required>
+    <button type='submit' id='sendEmailButton' class='btn btn-primary'>Send</button></form>";
 }
-
 ?>
