@@ -1,116 +1,8 @@
 <?php
-global $val;
-class infix_to_postfix{
-    public $infix=[];
-    public $poststack=[];
-    public $opstack=[];
-    public $limit;
-    
-    public function __construct($str){
-        $this->limit = strlen( $str );
-        $this->infix = $this->infixTokenizer($str);
-        $this->postfixConversion();
-        $this->lastoperation();
-    }
-    public static function precedence($ch){
 
-        $precedenceMap = [
-            '^' => 3,
-            '/'=> 2,'*'=>2, '%'=>2,
-            '+'=>1,'-'=>1
-        ];
-        return $precedenceMap[$ch]??0;
-    }
+include './InfixToPostfix.php';
 
-    public function isOperator($ch){
-        if($ch == '/' || $ch == '*' || $ch == '+' || $ch == '-'){
-            return 1;
-        }  
-        else{
-            return 0;
-     }
-    }
-
-    public function infixTokenizer($str){
-        $tokens=[];
-        $num = "";
-
-        for($i=0;$i<strlen($str);$i++){
-            $ch = $str[$i];
-            if(ctype_space($ch)){
-                continue;
-            }
-
-            if(ctype_digit($ch)||$ch=='.'){
-                $num .= $ch;
-            }else{
-                if(!empty($num)){
-                    $tokens[] = $num;
-                    $num = '';
-                }
-                $tokens[] = $ch;
-            }
-        }
-        if(!empty($num)) $tokens[]= $num;;
-        return $tokens;
-
-    }
-    public function postfixConversion(){
-        for($i=0;$i<sizeof($this->infix);$i++){
-            if($this->infix[$i]== '('){
-                array_push($this->opstack, $this->infix[$i]);
-                
-            }
-            else if($this->infix[$i]==')'){
-                if($this->infix[$i]!='('){// pops out operator between ( and )
-                    array_push($this->poststack,end($this->opstack));
-                    $popped = array_pop( $this->opstack );
-                }
-                array_pop($this->opstack);
-            }
-            else 
-            if(!$this->isOperator($this->infix[$i])){
-                array_push($this->poststack,$this->infix[$i]);
-                
-            }
-            else {
-                if(empty($this->opstack)){
-                array_push($this->opstack,$this->infix[$i]);
-                }
-                else if(end($this->opstack )== '('){
-                    array_push($this->opstack,$this->infix[$i]);
-                }
-                else{
-                    if(infix_to_postfix::precedence( end($this->opstack))<infix_to_postfix::precedence($this->infix[$i])){//top of stack has < prcedence
-                        array_push($this->opstack,$this->infix[$i]);
-                    }
-                    else{
-                        if(!empty($this->opstack)){
-                        while(infix_to_postfix::precedence(end($this->opstack)) >= infix_to_postfix::precedence($this->infix[$i])){
-                            array_push($this->poststack,$this->opstack[count($this->opstack)-1]);
-                            array_pop($this->opstack);
-                        }
-                    array_push($this->opstack,$this->infix[$i]);
-                    }
-                }
-
-                }
-            }
-        }
-    }
-    public function lastoperation(){
-    while(!empty($this->opstack)){
-        array_push($this->poststack,end($this->opstack));
-        array_pop($this->opstack);
-    }
-    }
-
-}
-?>
-
-<?php
-
-class postfix_to_result extends infix_to_postfix{
+class PostfixToResult extends InfixToPostfix{
     public $resultstack=[];
     public $result;
     
@@ -156,9 +48,10 @@ class postfix_to_result extends infix_to_postfix{
 
 if(isset($_GET) && !empty($_GET['name'])){
     $infix = $_GET['name'];
-    $postcalc1 = new postfix_to_result($infix); 
+    $postcalc1 = new PostfixToResult($infix);   
     $val = $postcalc1->result;
 }
+
 ?>
 <html lang="en">
 <head>
@@ -169,7 +62,9 @@ if(isset($_GET) && !empty($_GET['name'])){
 </head>
 <body><div id="form_div">
     <div><h2><?php echo $val; ?></h2></div>
-    <form action="/assignment4/assign4_1.php" method="GET" id="form">
+
+    <form action="/Calculator/PostfixToResult.php" method="GET" id="form">
+
         <div id="operator_div">
         <input type="text" placeholder="Enter the infix here" name="name" id="input_element" class="form-control"><br>
         </div>
@@ -208,13 +103,14 @@ if(isset($_GET) && !empty($_GET['name'])){
         <span class="btn" onclick='func("-")'>-</span>    
         <span class="btn" onclick='func("+")'>+</span><br>
     </div>
+
     
     <div id="operator_div">
         <span class="btn" onclick='func("X")'>X</span>    
         <button class="btn" type="submit">=</button>
         </div>
 
-    </form>
+    </form> 
     </div>
 
     <script>
@@ -264,8 +160,9 @@ if(isset($_GET) && !empty($_GET['name'])){
             width: 100%;
             background-color: rgba(1, 1, 1, 0.2);
         }
-
         
     </style>
 </body>
-</html>
+</html>     
+
+
