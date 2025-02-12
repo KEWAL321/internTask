@@ -5,8 +5,10 @@ class InfixToPostfix{
     public $poststack=[];
     public $opstack=[];
     public $limit;
+    public $mathematicalFunction = FALSE;
     
     public function __construct($str){
+        $str = str_replace('sin','s',$str);
         $this->limit = strlen( $str );
         $this->infix = $this->infixTokenizer($str);
         $this->postfixConversion();
@@ -23,7 +25,7 @@ class InfixToPostfix{
     }
 
     public function isOperator($ch){
-        if($ch == '/' || $ch == '*' || $ch == '+' || $ch == '-'){
+        if($ch == '/' || $ch == '*' || $ch == '+' || $ch == '-' || $ch='^' || $ch='%'){
             return 1;
         }  
         else{
@@ -31,30 +33,32 @@ class InfixToPostfix{
      }
     }
 
-    public function infixTokenizer($str){
+    public function infixTokenizer($str){//differentiate number other than single digit is a single whole number or not
         $tokens=[];
         $num = "";
 
         for($i=0;$i<strlen($str);$i++){
             $ch = $str[$i];
-            if(ctype_space($ch)){
+            if(ctype_space($ch)){// if space
                 continue;
             }
 
-            if(ctype_digit($ch)||$ch=='.'){// if the character is digit or decimal
+            if(ctype_digit($ch)||$ch=='.'){// if is digit or decimal
                 $num .= $ch;
             }else{
-                if(!empty($num)){// if the character is neither digit nor decimal
+                if(!empty($num)){// if is neither digit nor decimal
                     $tokens[] = $num;
                     $num = '';
                 }
                 $tokens[] = $ch;
             }
         }
-        if(!empty($num)) $tokens[]= $num;;
+        if(!empty($num)) $tokens[]= $num;
         return $tokens;
 
     }
+
+
     public function postfixConversion(){
         for($i=0;$i<sizeof($this->infix);$i++){
             if($this->infix[$i]== '('){

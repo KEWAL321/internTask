@@ -11,15 +11,6 @@ class PostfixToResult extends InfixToPostfix{
        $this->result = $this->postfixToResult();
     }
 
-    public function isOperator($ch){
-        if($ch == '/' || $ch == '*' || $ch == '+' || $ch == '-'){
-            return 1;
-        }  
-        else{
-            return 0;
-     }
-    }
-
     public function postfixToResult(){    
 
         $stack = [];
@@ -27,7 +18,11 @@ class PostfixToResult extends InfixToPostfix{
         foreach ($this->poststack as $token) {
             if (is_numeric($token)) {
                 $stack[] = $token;
-            } else {
+            }else if($token == 's'){
+                $a = array_pop($stack);
+                $stack[] = sin(deg2rad($a));
+            } 
+            else {
                 $b = array_pop($stack);
                 $a = array_pop($stack);
                 switch ($token) {
@@ -80,7 +75,7 @@ if(isset($_GET) && !empty($_GET['name'])){
         <span class="btn" onclick='func(7)'>7</span>
         <span class="btn" onclick='func(8)'>8</span>
         <span class="btn" onclick='func(9)'>9</span>
-        <span class="btn" onclick='func("%")'>%</span><br>
+        <span class="btn" onclick='func("X")'>X</span><br>
         </div>
 
         <div id="operator_div">
@@ -104,9 +99,15 @@ if(isset($_GET) && !empty($_GET['name'])){
         <span class="btn" onclick='func("+")'>+</span><br>
     </div>
 
+    <div id="operator_div"> 
+        <span class="btn" onclick='func("sin")'>sin</span>
+        <span class="btn" onclick='func("cos")'>cos</span>
+        <span class="btn" onclick='func("√")'>√</span>    
+        <span class="btn" onclick='func("%")'>%</span><br>
+    </div>
     
     <div id="operator_div">
-        <span class="btn" onclick='func("X")'>X</span>    
+        <span class="btn" onclick='func("log")'>log</span>    
         <button class="btn" type="submit">=</button>
         </div>
 
