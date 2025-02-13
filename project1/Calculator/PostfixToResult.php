@@ -27,9 +27,12 @@ class PostfixToResult extends InfixToPostfix{
             }else if($value == 't'){
                 $a = array_pop($stack);
                 $stack[] = tan(deg2rad($a));
-            }else if($value == 'c'){
+            }else if($value == 'l'){
                 $a = array_pop($stack);
                 $stack[] = log($a);
+            }else if($value == '√'){
+                $a = array_pop($stack);
+                $stack[] = sqrt($a);
             } 
             else {
                 $b = array_pop($stack);

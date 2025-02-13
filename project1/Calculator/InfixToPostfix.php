@@ -21,13 +21,13 @@ class InfixToPostfix{
         $precedenceMap = [
             '^' => 3,
             '/'=> 2,'*'=>2, '%'=>2,
-            '+'=>1,'-'=>1,'s'=>1,'l'=>1
+            '+'=>1,'-'=>1,'s'=>1,'l'=>1,'c'=>1,'t'=>1
         ];
         return $precedenceMap[$ch]??0;
     }
 
     public function isOperator($ch){
-        if($ch == '/' || $ch == '*' || $ch == '+' || $ch == '-' || $ch == 's' || $ch == 'c' || $ch == 't' || $ch == 'l'){
+        if($ch == '/' || $ch == '*' || $ch == '+' || $ch == '-' || $ch == 's' || $ch == 'c' || $ch == 't' || $ch == 'l' || $ch == '√'){
             return 1;
         }  
         else{
@@ -59,8 +59,9 @@ class InfixToPostfix{
         return $tokens;
 
     }
+
     public function postfixConversion(){
-        for($i=0;$i<sizeof($this->infix);$i++){
+        for($i=0;$i<count($this->infix);$i++){
             if($this->infix[$i]== '('){
                 array_push($this->opstack, $this->infix[$i]);
                 
@@ -74,16 +75,14 @@ class InfixToPostfix{
                     }
                 }
                 array_pop($this->opstack);
-            }   
-            else 
-            if(!$this->isOperator($this->infix[$i])){
+            } 
+            else if(!$this->isOperator($this->infix[$i])){//if current element is not operator
                 array_push($this->poststack,$this->infix[$i]);
   
             }
             else {
                 if(empty($this->opstack)){
                     array_push($this->opstack,$this->infix[$i]);
-
                 }
                 else if(end($this->opstack )== '('){
                     array_push($this->opstack,$this->infix[$i]);
@@ -95,9 +94,9 @@ class InfixToPostfix{
                     }
                     else{
                         if(!empty($this->opstack)){
+
                         while(InfixToPostfix::precedence(end($this->opstack)) >= InfixToPostfix::precedence($this->infix[$i])){
                             array_push($this->poststack,$this->opstack[count($this->opstack)-1]);
-
                             array_pop($this->opstack);
 
                         }
@@ -112,11 +111,11 @@ class InfixToPostfix{
     }
 
     public function lastoperation(){
-    while(!empty($this->opstack)){
+        while(!empty($this->opstack)){
 
-     array_push($this->poststack,end($this->opstack));
-     array_pop($this->opstack);  
-    }
+            array_push($this->poststack,end($this->opstack));
+            array_pop($this->opstack);  
+        }
     }
 
 }
