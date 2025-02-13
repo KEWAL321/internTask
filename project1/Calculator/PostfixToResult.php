@@ -11,21 +11,30 @@ class PostfixToResult extends InfixToPostfix{
        $this->result = $this->postfixToResult();
     }
 
-    public function postfixToResult(){    
+    public function postfixToResult(){   
 
         $stack = [];
 
-        foreach ($this->poststack as $token) {
-            if (is_numeric($token)) {
-                $stack[] = $token;
-            }else if($token == 's'){
+        foreach ($this->poststack as $key=>$value) {
+            if (is_numeric($value)) {
+                $stack[] = $value;
+            }else if($value == 's'){
                 $a = array_pop($stack);
                 $stack[] = sin(deg2rad($a));
+            }else if($value == 'c'){
+                $a = array_pop($stack);
+                $stack[] = cos(deg2rad($a));
+            }else if($value == 't'){
+                $a = array_pop($stack);
+                $stack[] = tan(deg2rad($a));
+            }else if($value == 'c'){
+                $a = array_pop($stack);
+                $stack[] = log($a);
             } 
             else {
                 $b = array_pop($stack);
                 $a = array_pop($stack);
-                switch ($token) {
+                switch ($value) {
                     case '+': $stack[] = $a + $b; break;
                     case '-': $stack[] = $a - $b; break;
                     case '*': $stack[] = $a * $b; break;
@@ -48,70 +57,62 @@ if(isset($_GET) && !empty($_GET['name'])){
 }
 
 ?>
+
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <title>Document</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Calculator</title>
 </head>
-<body><div id="form_div">
-    <div><h2><?php echo $val; ?></h2></div>
+<body class="flex items-center justify-center h-screen bg-gray-100">
+    <div id="form_div" class="bg-white p-6 rounded-lg shadow-lg">
+        <div><h2 class="text-xl font-semibold text-center mb-4"><?php echo $val; ?></h2></div>
 
-    <form action="/Calculator/PostfixToResult.php" method="GET" id="form">
+        <form action="/Calculator/PostfixToResult.php" method="GET" id="form" class="space-y-4">
+            <div class="input_div">
+                <p id="hidden_P"></p>
+                <input type="text" name="name" id="input_element" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"><br>
+            </div>
+            
+            <div id="btns" class="grid grid-cols-4 gap-2">
+                <span class="btn bg-gray-200 p-2 rounded" onclick='func("(")'>(</span>
+                <span class="btn bg-gray-200 p-2 rounded" onclick='func(")")'>&nbsp)</span>
+                <span class="btn bg-gray-200 p-2 rounded" onclick='func("^")'>^</span>
+                <span class="btn bg-red-400 text-white p-2 rounded" onclick='func("AC")'>AC</span>
 
-        <div id="operator_div">
-        <input type="text" placeholder="Enter the infix here" name="name" id="input_element" class="form-control"><br>
-        </div>
-        
-        <div id="operator_div">
-        <span class="btn" onclick='func("(")'>(</span>
-        <span class="btn" onclick='func(")")'>&nbsp)</span>
-        <span class="btn" onclick='func("^")'>^</span>
-        <span class="btn" onclick='func("AC")'>AC</span><br>
-        </div>
+                <span class="btn bg-gray-300 p-2 rounded" onclick='func(7)'>7</span>
+                <span class="btn bg-gray-300 p-2 rounded" onclick='func(8)'>8</span>
+                <span class="btn bg-gray-300 p-2 rounded" onclick='func(9)'>9</span>
+                <span class="btn bg-blue-500 text-white p-2 rounded" onclick='func("X")'>X</span>
 
-        <div id="operator_div">
-        <span class="btn" onclick='func(7)'>7</span>
-        <span class="btn" onclick='func(8)'>8</span>
-        <span class="btn" onclick='func(9)'>9</span>
-        <span class="btn" onclick='func("X")'>X</span><br>
-        </div>
+                <span class="btn bg-gray-300 p-2 rounded" onclick='func(4)'>4</span>
+                <span class="btn bg-gray-300 p-2 rounded" onclick='func(5)'>5</span>
+                <span class="btn bg-gray-300 p-2 rounded" onclick='func(6)'>6</span>
+                <span class="btn bg-blue-500 text-white p-2 rounded" onclick='func("/")'>/</span>
 
-        <div id="operator_div">
-        <span class="btn" onclick='func(4)'>4</span>
-        <span class="btn" onclick='func(5)'>5</span>
-        <span class="btn" onclick='func(6)'>6</span>
-        <span class="btn" onclick='func("/")'>/</span><br>
-        </div>
+                <span class="btn bg-gray-300 p-2 rounded" onclick='func(1)'>1</span>
+                <span class="btn bg-gray-300 p-2 rounded" onclick='func(2)'>2</span>
+                <span class="btn bg-gray-300 p-2 rounded" onclick='func(3)'>3</span>
+                <span class="btn bg-blue-500 text-white p-2 rounded" onclick='func("*")'>*</span>
+                
+                <span class="btn bg-gray-300 p-2 rounded" onclick='func(0)'>0</span>
+                <span class="btn bg-gray-300 p-2 rounded" onclick='func(".")'>.</span>
+                <span class="btn bg-blue-500 text-white p-2 rounded" onclick='func("-")'>-</span>    
+                <span class="btn bg-blue-500 text-white p-2 rounded" onclick='func("+")'>+</span>
+                
+                <span class="btn bg-green-500 text-white p-2 rounded" onclick='func("sin")'>sin</span>
+                <span class="btn bg-green-500 text-white p-2 rounded" onclick='func("cos")'>cos</span>
+                <span class="btn bg-green-500 text-white p-2 rounded" onclick='func("√")'>√</span>    
+                <span class="btn bg-green-500 text-white p-2 rounded" onclick='func("%")'>%</span>
 
-        <div id="operator_div">
-        <span class="btn" onclick='func(1)'>1</span>
-        <span class="btn" onclick='func(2)'>2</span>
-        <span class="btn" onclick='func(3)'>3</span>
-        <span class="btn" onclick='func("*")'>*</span><br>
-    </div>
-    
-    <div id="operator_div"> 
-        <span class="btn" onclick='func(0)'>0</span>
-        <span class="btn" onclick='func(".")'>.</span>
-        <span class="btn" onclick='func("-")'>-</span>    
-        <span class="btn" onclick='func("+")'>+</span><br>
-    </div>
-
-    <div id="operator_div"> 
-        <span class="btn" onclick='func("sin")'>sin</span>
-        <span class="btn" onclick='func("cos")'>cos</span>
-        <span class="btn" onclick='func("√")'>√</span>    
-        <span class="btn" onclick='func("%")'>%</span><br>
-    </div>
-    
-    <div id="operator_div">
-        <span class="btn" onclick='func("log")'>log</span>    
-        <button class="btn" type="submit">=</button>
-        </div>
-
-    </form> 
+                <span class="btn bg-green-500 text-white p-2 rounded" onclick='func("log")'>log</span>    
+                <span class="btn bg-green-500 text-white p-2 rounded" onclick='func("tan")'>tan</span>    
+                <button class="btn bg-blue-700 text-white p-2 rounded" type="submit">=</button>
+            </div>
+        </form> 
     </div>
 
     <script>
@@ -133,37 +134,7 @@ if(isset($_GET) && !empty($_GET['name'])){
                 }
             }
         }
-
     </script>
-    <style>
-        body{
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-        }
-
-        #operator_div{
-            margin-top: 10px;
-        }
-
-        .btn {
-            border: 1px solid black;
-            width: 45px;
-            margin-right: 5px;
-        }
-
-        .btn:hover{
-            background-color: black;
-            color: white;
-        }
-
-        #input_element {
-            width: 100%;
-            background-color: rgba(1, 1, 1, 0.2);
-        }
-        
-    </style>
 </body>
-</html>     
-
+</html>
 
