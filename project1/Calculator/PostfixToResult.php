@@ -1,5 +1,9 @@
 <?php
+session_start();
 
+if (!isset($_SESSION['memory'])) {
+    $_SESSION['memory'] = [];
+}
 include './InfixToPostfix.php';
 
 class PostfixToResult extends InfixToPostfix{
@@ -12,7 +16,6 @@ class PostfixToResult extends InfixToPostfix{
     }
 
     public function postfixToResult(){   
-
         $stack = [];
 
         foreach ($this->poststack as $key=>$value) {
@@ -50,13 +53,23 @@ class PostfixToResult extends InfixToPostfix{
     
         return array_pop($stack);
     }
-
 }
 
-if(isset($_GET) && !empty($_GET['name'])){
-    $infix = $_GET['name'];
-    $postcalc1 = new PostfixToResult($infix);   
-    $val = $postcalc1->result;
+if(isset($_GET)){
+    if(isset($_GET['name'])){
+        $infix = $_GET['name'];
+        $postcalc1 = new PostfixToResult($infix);
+        $val = $postcalc1->result;
+        $_SESSION['memory'][$infix] = $val;
+    }
+    else{
+        if (session_status() === PHP_SESSION_ACTIVE){
+            session_unset();
+        }
+    }
+}
+if(isset($_SESSION['memory'])){
+    $memory=$_SESSION['memory'];
 }
 
 ?>
@@ -67,20 +80,28 @@ if(isset($_GET) && !empty($_GET['name'])){
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <title>Calculator</title>
 </head>
 <body class="flex items-center justify-center h-screen bg-gray-100">
     <div id="form_div" class="bg-white p-6 rounded-lg shadow-lg">
-        <div><h2 class="text-xl font-semibold text-center mb-4"><?php echo $val; ?></h2></div>
+        <!-- <div><h2 class="text-xl font-semibold text-center mb-4"><?php echo $val; ?></h2></div> -->
 
         <form action="/Calculator/PostfixToResult.php" method="GET" id="form" class="space-y-4">
-            <div class="input_div">
-                <p id="hidden_P"></p>
-                <input type="text" name="name" id="input_element" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"><br>
+            <div class="input_div" style="display:flex;flex-direction:column";> 
+                    <?php
+                    if(isset($memory)){
+                        foreach($memory as $key=>$value){
+                            echo "<p style='text-align:end;font-size:12px;color: rgb(119, 119, 119);'>$key = $value</p><br>";
+                        } 
+                    }
+                    ?>
+
+                <input type="text" style='text-align:end;font-size:22px;font-weight:700;' name="name" id="input_element" class="w-full p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value= <?php echo $val;?>><br>
             </div>
             
-            <div id="btns" class="grid grid-cols-4 gap-2">
+            <div id="btns" class="grid grid-cols-4 gap-2 mt-3">
                 <span class="btn bg-gray-200 p-2 rounded" onclick='func("(")'>(</span>
                 <span class="btn bg-gray-200 p-2 rounded" onclick='func(")")'>&nbsp)</span>
                 <span class="btn bg-gray-200 p-2 rounded" onclick='func("^")'>^</span>
@@ -89,7 +110,7 @@ if(isset($_GET) && !empty($_GET['name'])){
                 <span class="btn bg-gray-300 p-2 rounded" onclick='func(7)'>7</span>
                 <span class="btn bg-gray-300 p-2 rounded" onclick='func(8)'>8</span>
                 <span class="btn bg-gray-300 p-2 rounded" onclick='func(9)'>9</span>
-                <span class="btn bg-blue-500 text-white p-2 rounded" onclick='func("X")'>X</span>
+                <span class="btn bg-blue-500 text-white p-2 rounded" onclick='func("X")'>CE</span>
 
                 <span class="btn bg-gray-300 p-2 rounded" onclick='func(4)'>4</span>
                 <span class="btn bg-gray-300 p-2 rounded" onclick='func(5)'>5</span>
@@ -118,6 +139,8 @@ if(isset($_GET) && !empty($_GET['name'])){
         </form> 
     </div>
 
+    <div></div>
+
     <script>
         const inp_value = document.getElementById("input_element");
         function func(a){
@@ -140,4 +163,5 @@ if(isset($_GET) && !empty($_GET['name'])){
     </script>
 </body>
 </html>
+
 
