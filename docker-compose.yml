@@ -1,0 +1,52 @@
+#version: "3.8"
+
+services:
+  web:
+    build: .
+    container_name: apache
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html
+    networks:
+      - webnet
+
+  db:
+    container_name: mysql
+    image: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - webnet
+
+  # app:
+  #   build: ./app
+  #   working_dir: /usr/src/app
+  #   volumes:
+  #     - ./app:/usr/src/app
+  #   command: ["node", "server.js"]
+  #   depends_on:
+  #     - db
+  #   environment:
+  #     DATABASE_HOST: db
+  #     DATABASE_USER: user
+  #     DATABASE_PASSWORD: password
+  #   ports:
+  #     - "3000:3000"
+  #   networks:
+  #     - webnet
+
+volumes:
+  mysql_data:
+
+networks:
+  webnet:
+    driver: bridge

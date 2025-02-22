@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Leaflet Partial Canvas Example</title>
+
+    <!-- Leaflet CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <!-- Leaflet Draw CSS (optional) -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"
+    />
+
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+      }
+      #map {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* The canvas will be positioned absolutely over the polygon's bounding box */
+      #overlayCanvas {
+        position: absolute;
+        z-index: 999;
+        pointer-events: auto;
+        border: 1px dashed red; /* For debugging; remove if not needed */
+        display: none; /* Hidden by default until we show it */
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <canvas id="overlayCanvas"></canvas>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Leaflet Draw JS (optional) -->
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+
+    <script>
+      /*********************************************************************
+       * 0) AREA UTIL (example from prior code). If you need advanced
+       *    geodesic calculations, you can do so. Simple version below:
+       *********************************************************************/
+      const Area = {
+        getPolygonMetrics(latlngs) {
+          return {
+            // Basic bounding box approach
+            width: this.getBoundingBoxWidth(latlngs),
+            length: this.getBoundingBoxHeight(latlngs),
+            area: this.getPolygonAreaSqM(latlngs),
+          };
+        },
+
+        getBoundingBoxWidth(latlngs) {
+          let minLng = Infinity,
+            maxLng = -Infinity;
+          latlngs.forEach((pt) => {
+            if (pt.lng < minLng) minLng = pt.lng;
+            if (pt.lng > maxLng) maxLng = pt.lng;
+          });
+          // distance in meters
+          return L.latLng(latlngs[0]).distanceTo(
+            L.latLng(latlngs[0].lat, maxLng)
+          );
+        },
+
+        getBoundingBoxHeight(latlngs) {
+          let minLat = Infinity,
+            maxLat = -Infinity;
+          latlngs.forEach((pt) => {
+            if (pt.lat < minLat) minLat = pt.lat;
+            if (pt.lat > maxLat) maxLat = pt.lat;
+          });
+          // distance in meters
+          return L.latLng(minLat, latlngs[0].lng).distanceTo(
+            L.latLng(maxLat, latlngs[0].lng)
+          );
+        },
+
+        // Basic "shoelace" area approach for small polygons:
+        getPolygonAreaSqM(latlngs) {
+          if (latlngs.length < 3) return 0;
+          // approximate local projection: use centroid + lat/lng to x,y
+          let latSum = 0,
+            lngSum = 0;
+          latlngs.forEach((p) => {
+            latSum += p.lat;
+            lngSum += p.lng;
+          });
+          const centroidLat = latSum / latlngs.length;
+          const centroidLng = lngSum / latlngs.length;
+
+          const coords = latlngs.map((pt) => {
+            const x =
+              (pt.lng - centroidLng) *
+              111320 *
+              Math.cos((centroidLat * Math.PI) / 180);
+            const y = (pt.lat - centroidLat) * 110540;
+            return { x, y };
+          });
+
+          let area = 0;
+          for (let i = 0; i < coords.length; i++) {
+            const j = (i + 1) % coords.length;
+            area += coords[i].x * coords[j].y - coords[j].x * coords[i].y;
+          }
+          return Math.abs(area / 2);
+        },
+      };
+
+      /*********************************************************************
+       * 1) LEAFLET MAP SETUP
+       *********************************************************************/
+      const mapCenter = [27.7103, 85.3222];
+      const mapZoom = 20;
+      const map = L.map("map").setView(mapCenter, mapZoom);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 22,
+        minZoom: 9,
+      }).addTo(map);
+
+      /*********************************************************************
+       * 2) DOM Elements (Overlay Canvas)
+       *********************************************************************/
+      const overlayCanvas = document.getElementById("overlayCanvas");
+      const ctx = overlayCanvas.getContext("2d");
+      // We'll store the bounding box's top-left container coords:
+      let boundingBoxTopLeft = { x: 0, y: 0 };
+
+      function hideCanvas() {
+        overlayCanvas.style.display = "none";
+      }
+      function showCanvas() {
+        overlayCanvas.style.display = "block";
+      }
+
+      /*********************************************************************
+       * 3) Polygon + Shapes
+       *********************************************************************/
+      let overlayPolygonLatLngs = null;
+
+      const floorPlanShapes = [
+        // Outer walls
+        {
+          type: "polygon",
+          latlngs: [
+            { lat: -30.271, lng: 116.66095 },
+            { lat: -30.271, lng: 116.661 },
+            { lat: -30.27105, lng: 116.661 },
+            { lat: -30.27105, lng: 116.66095 },
+          ],
+          strokeColor: "#000",
+          fillColor: "#fff",
+          lineWidth: 3,
+          isDraggable: false,
+        },
+        // Example rectangle
+        {
+          type: "rectLatLng",
+          topLeft: { lat: -30.27104, lng: 116.66096 },
+          widthDeg: 0.0004,
+          heightDeg: 0.0002,
+          strokeColor: "#000",
+          fillColor: "#caf0f8",
+          lineWidth: 2,
+          label: "STORAGE",
+          isDraggable: true,
+        },
+      ];
+
+      /*********************************************************************
+       * 4) BOUNDING BOX & CANVAS POSITIONING
+       *********************************************************************/
+      function getLatLngBounds(latlngs) {
+        let minLat = Infinity,
+          maxLat = -Infinity;
+        let minLng = Infinity,
+          maxLng = -Infinity;
+        latlngs.forEach((pt) => {
+          if (pt.lat < minLat) minLat = pt.lat;
+          if (pt.lat > maxLat) maxLat = pt.lat;
+          if (pt.lng < minLng) minLng = pt.lng;
+          if (pt.lng > maxLng) maxLng = pt.lng;
+        });
+        return { minLat, maxLat, minLng, maxLng };
+      }
+
+      function getPixelBoundsForLatLngs(map, latlngs) {
+        const { minLat, maxLat, minLng, maxLng } = getLatLngBounds(latlngs);
+        const topLeftPx = map.latLngToContainerPoint([maxLat, minLng]);
+        const bottomRightPx = map.latLngToContainerPoint([minLat, maxLng]);
+        return { topLeftPx, bottomRightPx };
+      }
+
+      /**
+       * Position the canvas to only cover the polygon bounding box
+       */
+      function positionCanvasOverPolygon(map, overlayCanvas, latlngs) {
+        const { topLeftPx, bottomRightPx } = getPixelBoundsForLatLngs(
+          map,
+          latlngs
+        );
+        const w = bottomRightPx.x - topLeftPx.x;
+        const h = bottomRightPx.y - topLeftPx.y;
+
+        if (w <= 0 || h <= 0) {
+          hideCanvas();
+          return;
+        }
+
+        showCanvas();
+        boundingBoxTopLeft.x = topLeftPx.x;
+        boundingBoxTopLeft.y = topLeftPx.y;
+
+        overlayCanvas.style.left = topLeftPx.x + "px";
+        overlayCanvas.style.top = topLeftPx.y + "px";
+        overlayCanvas.width = w;
+        overlayCanvas.height = h;
+      }
+
+      /**
+       * Place N random rectLatLng shapes inside the polygon's bounding box.
+       * @param {Number} count - how many shapes to add
+       * @param {Object} sizeInDegrees - approximate widthDeg & heightDeg for each shape
+       */
+      function addRandomRectLatLngShapes(
+        count,
+        sizeInDegrees = { widthDeg: 0.00005, heightDeg: 0.00002 }
+      ) {
+        if (!overlayPolygonLatLngs || overlayPolygonLatLngs.length < 3) {
+          return;
+        }
+
+        // 1) Get bounding box in lat/lng
+        const { minLat, maxLat, minLng, maxLng } = getLatLngBounds(
+          overlayPolygonLatLngs
+        );
+
+        // 2) Generate random shapes inside that bounding box
+        for (let i = 0; i < count; i++) {
+          // Random lat/lng within bounding box
+          const randLat = Math.random() * (maxLat - minLat) + minLat;
+          const randLng = Math.random() * (maxLng - minLng) + minLng;
+
+          // Construct a new shape object
+          const newShape = {
+            type: "rectLatLng",
+            topLeft: { lat: randLat, lng: randLng },
+            widthDeg: sizeInDegrees.widthDeg,
+            heightDeg: sizeInDegrees.heightDeg,
+            strokeColor: "#000",
+            fillColor: "#fff",
+            lineWidth: 2,
+            label: "BOX " + (i + 1),
+            isDraggable: true,
+          };
+
+          // 3) Push it onto your floorPlanShapes array
+          floorPlanShapes.push(newShape);
+        }
+
+        // 4) Redraw the miniCanvas to see all shapes
+        drawMiniCanvas(); // or updateMiniCanvas() if that’s your main refresh method
+      }
+
+      /*********************************************************************
+       * 5) DRAWING SHAPES INSIDE THE CANVAS (LOCAL COORDS)
+       *********************************************************************/
+      function drawMiniCanvas() {
+        ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+        if (overlayPolygonLatLngs && overlayPolygonLatLngs.length > 0) {
+          updateShapePositions(); // reposition shapes if needed
+        }
+
+        floorPlanShapes.forEach((shape) => {
+          switch (shape.type) {
+            case "polygon":
+              drawPolygonLatLng(shape);
+              break;
+            case "rectLatLng":
+              drawRectLatLng(shape);
+              break;
+            default:
+              console.warn("Unknown shape type:", shape);
+          }
+        });
+      }
+
+      function drawPolygonLatLng(shape) {
+        const pts = shape.latlngs.map((ll) => map.latLngToContainerPoint(ll));
+        if (pts.length < 2) return;
+        ctx.beginPath();
+        ctx.moveTo(
+          pts[0].x - boundingBoxTopLeft.x,
+          pts[0].y - boundingBoxTopLeft.y
+        );
+        for (let i = 1; i < pts.length; i++) {
+          const localX = pts[i].x - boundingBoxTopLeft.x;
+          const localY = pts[i].y - boundingBoxTopLeft.y;
+          ctx.lineTo(localX, localY);
+        }
+        ctx.closePath();
+
+        if (shape.fillColor) {
+          ctx.fillStyle = shape.fillColor;
+          ctx.fill();
+        }
+        if (shape.strokeColor) {
+          ctx.strokeStyle = shape.strokeColor;
+          ctx.lineWidth = shape.lineWidth || 1;
+          ctx.stroke();
+        }
+      }
+
+      function drawRectLatLng(shape) {
+        const topLeftPx = map.latLngToContainerPoint(shape.topLeft);
+        const brLat = shape.topLeft.lat - shape.heightDeg;
+        const brLng = shape.topLeft.lng + shape.widthDeg;
+        const bottomRightPx = map.latLngToContainerPoint({
+          lat: brLat,
+          lng: brLng,
+        });
+
+        const localX = topLeftPx.x - boundingBoxTopLeft.x;
+        const localY = topLeftPx.y - boundingBoxTopLeft.y;
+        const w = bottomRightPx.x - topLeftPx.x;
+        const h = bottomRightPx.y - topLeftPx.y;
+
+        ctx.beginPath();
+        ctx.rect(localX, localY, w, h);
+        if (shape.fillColor) {
+          ctx.fillStyle = shape.fillColor;
+          ctx.fill();
+        }
+        if (shape.strokeColor) {
+          ctx.strokeStyle = shape.strokeColor;
+          ctx.lineWidth = shape.lineWidth || 1;
+          ctx.stroke();
+        }
+        ctx.closePath();
+
+        if (shape.label) {
+          ctx.save();
+          ctx.font = "14px Arial";
+          ctx.fillStyle = "#000";
+          ctx.textAlign = "center";
+          const centerX = localX + w / 2;
+          const centerY = localY + h / 2;
+          ctx.fillText(shape.label, centerX, centerY);
+          ctx.restore();
+        }
+      }
+
+      /*********************************************************************
+       * 6) DRAGGING SHAPES INSIDE THE CANVAS
+       *********************************************************************/
+      let isDragging = false;
+      let dragShape = null;
+      let dragOffsetPx = { x: 0, y: 0 };
+
+      overlayCanvas.addEventListener("mousedown", (evt) => {
+        const mouse = getLocalMousePos(evt);
+        for (let i = floorPlanShapes.length - 1; i >= 0; i--) {
+          const shape = floorPlanShapes[i];
+          if (shape.type === "rectLatLng" && shape.isDraggable) {
+            const box = getRectLocalPixelBounds(shape);
+            if (
+              mouse.x >= box.x &&
+              mouse.x <= box.x + box.w &&
+              mouse.y >= box.y &&
+              mouse.y <= box.y + box.h
+            ) {
+              dragShape = shape;
+              isDragging = true;
+              dragOffsetPx.x = mouse.x - box.x;
+              dragOffsetPx.y = mouse.y - box.y;
+              break;
+            }
+          }
+        }
+      });
+
+      overlayCanvas.addEventListener("mousemove", (evt) => {
+        if (!isDragging || !dragShape) return;
+        const mouse = getLocalMousePos(evt);
+
+        const newLocalX = mouse.x - dragOffsetPx.x;
+        const newLocalY = mouse.y - dragOffsetPx.y;
+
+        // Convert local coords -> container coords
+        const containerX = newLocalX + boundingBoxTopLeft.x;
+        const containerY = newLocalY + boundingBoxTopLeft.y;
+
+        // Container coords -> lat/lng
+        const newLatLng = map.containerPointToLatLng([containerX, containerY]);
+
+        // Update shape's topLeft
+        dragShape.topLeft.lat = newLatLng.lat;
+        dragShape.topLeft.lng = newLatLng.lng;
+
+        drawMiniCanvas();
+      });
+
+      overlayCanvas.addEventListener("mouseup", () => {
+        isDragging = false;
+        dragShape = null;
+      });
+
+      function getRectLocalPixelBounds(shape) {
+        const topLeftPx = map.latLngToContainerPoint(shape.topLeft);
+        const brLat = shape.topLeft.lat - shape.heightDeg;
+        const brLng = shape.topLeft.lng + shape.widthDeg;
+        const bottomRightPx = map.latLngToContainerPoint({
+          lat: brLat,
+          lng: brLng,
+        });
+
+        return {
+          x: topLeftPx.x - boundingBoxTopLeft.x,
+          y: topLeftPx.y - boundingBoxTopLeft.y,
+          w: bottomRightPx.x - topLeftPx.x,
+          h: bottomRightPx.y - topLeftPx.y,
+        };
+      }
+
+      function getLocalMousePos(evt) {
+        const rect = overlayCanvas.getBoundingClientRect();
+        return {
+          x: evt.clientX - rect.left,
+          y: evt.clientY - rect.top,
+        };
+      }
+
+      /*********************************************************************
+       * 7) UPDATE SHAPES’ POSITIONS
+       *********************************************************************/
+      function updateShapePositions() {
+        if (!overlayPolygonLatLngs) return;
+        // floorPlanShapes[0] = polygon
+        floorPlanShapes[0].latlngs = overlayPolygonLatLngs;
+        const baseLat = overlayPolygonLatLngs[0].lat;
+        const baseLng = overlayPolygonLatLngs[0].lng;
+
+        // Example offsets (use your original logic)
+        // Then offset each rect, but skip the shape that is being dragged
+        for (let i = 1; i < floorPlanShapes.length; i++) {
+          const shape = floorPlanShapes[i];
+          if (!shape.isDraggable || shape !== dragShape) {
+            // Only reassign if we want them anchored to the polygon
+            // shape 1
+            if (i === 1) {
+              shape.topLeft.lat = baseLat - 0.00004;
+              shape.topLeft.lng = baseLng + 0.00004;
+            }
+            // shape 2
+            if (i === 2) {
+              shape.topLeft.lat = baseLat - 0.00004;
+              shape.topLeft.lng = floorPlanShapes[1].topLeft.lng + 0.0004;
+            }
+            // etc...
+          }
+        }
+      }
+
+      /*********************************************************************
+       * 8) MASTER REFRESH (called whenever map moves/zooms or polygon changes)
+       *********************************************************************/
+      function updateMiniCanvas() {
+        if (!overlayPolygonLatLngs || overlayPolygonLatLngs.length < 3) {
+          hideCanvas();
+          return;
+        }
+        // Position the canvas
+        positionCanvasOverPolygon(map, overlayCanvas, overlayPolygonLatLngs);
+        // Draw shapes in local coords
+        drawMiniCanvas();
+      }
+
+      /*********************************************************************
+       * 9) MAP EVENTS
+       *********************************************************************/
+      map.on("move", updateMiniCanvas);
+      map.on("zoom", updateMiniCanvas);
+      map.on("resize", updateMiniCanvas);
+
+      /*********************************************************************
+       * 10) INIT
+       *********************************************************************/
+      updateMiniCanvas(); // If we have no polygon yet, it just hides the canvas.
+
+      /*********************************************************************
+       * 11) LEAFLET DRAW
+       *********************************************************************/
+      const drawnItems = new L.FeatureGroup();
+      map.addLayer(drawnItems);
+
+      const drawControl = new L.Control.Draw({
+        edit: { featureGroup: drawnItems },
+        draw: {
+          polygon: true,
+          rectangle: true,
+          circle: false,
+          marker: false,
+          polyline: false,
+        },
+      });
+      map.addControl(drawControl);
+
+      map.on(L.Draw.Event.CREATED, (event) => {
+        const layer = event.layer;
+        drawnItems.addLayer(layer);
+
+        // If polygon or rectangle, store latlngs and update
+        if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
+          overlayPolygonLatLngs = layer.getLatLngs()[0];
+          updateMiniCanvas();
+        }
+      });
+
+      /*********************************************************************
+       * 12)            GEOJSON
+       *********************************************************************/
+      L.geoJSON(pointJson).addTo(map);
+      L.geoJSON(lineJson).addTo(map);
+      L.geoJSON(polygonJson, {
+        onEachFeature: function (feature, layer) {
+          layer.bindPopup(feature.properties.name);
+        },
+        style: {
+          fillColor: "red",
+          fillOpacity: "0.2",
+          color: "#c0c0c0",
+        },
+      }).addTo(map);
+    </script>
+  </body>
+</html>
