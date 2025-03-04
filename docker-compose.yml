@@ -3,7 +3,7 @@
 services:
   web:
     build: .
-    container_name: apache
+    container_name: apache-sever
     ports:
       - "8000:80"
     volumes:
@@ -12,7 +12,7 @@ services:
       - webnet
 
   db:
-    container_name: mysql
+    container_name: mysql-DB
     image: mysql
     restart: always
     environment:
@@ -24,6 +24,18 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:
+      - webnet
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - "8080:80"
     networks:
       - webnet
 
