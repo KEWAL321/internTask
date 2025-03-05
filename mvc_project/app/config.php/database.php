@@ -1,6 +1,6 @@
 <?php
 class Database {
-    private $host = 'localhost';
+    private $host = 'db';
     private $db_name = 'crud';
     private $username = 'root';
     private $password = "password";

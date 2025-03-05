@@ -1,35 +1,61 @@
 <?php
-// require('./db_conn.php');
+    session_start();
+     $host = 'db';
+     $database = 'crud';
+     $username = 'root';
+     $password = "password";
+     $user_mail = NULL;
+     $user_id = NULL;
 
-$host = 'db'; 
-$username = 'root';
-$password = 'password';
-$database = 'crud';
-$u_exists = false;
-$p_exists = false;
+    function connect() {
+        global $host, $database, $username, $password; 
+        $conn = null;   
+        try {
+            $conn = new PDO("mysql:host=" . $host . ";dbname=" . $database, $username, $password);
+            $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        }catch (PDOException $e){
+            echo "Connection error: ". $e->getMessage();
+        }
+        return $conn;
+    }
 
-$conn =  new mysqli($host,$username,$password,$database);
-// $conn =  dbConn();
+    $conn = connect();
+
 
 // Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+if (!$conn) {
+    die("Connection failed: ");
+    }
 
 // Check if the form was submitted
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+
     if (isset($_POST['submit1'])) {
         // Prepare the SQL statement (Corrected: no single quotes around column names)
-        $sql = $conn->prepare("INSERT INTO student (sname, parent_mail, password) VALUES (?, ?, ?)");
+        $sql = $conn->prepare("INSERT INTO user (name, email, password) VALUES (:name, :email, :password)");
         
         // Bind parameters (Corrected the parameter types: 'i' for integer, 's' for string)
-        $sql->bind_param("sss",$_POST['sname'], $_POST['semail'], $_POST['spassword']);
+        $sql->bindValue(':name',$_POST['name']);    
+        $sql->bindValue(':email',$_POST['email']);
+        $sql->bindValue(':password',$_POST['password']);
+        // $sql->bindValue(':spassword', password_hash($_POST['spassword'], PASSWORD_BCRYPT)); // Hash password
 
         // Execute the query
         if (!$sql->execute()) {
-            echo "Error: " . $sql->error;
+            echo "Error: " . $sql->errorInfo()[2];
         }
+
+        //storing the user email
+        $user_mail = $_POST['email'];
+        $stmt = $conn->prepare("SELECT * FROM users WHERE email = :email");
+        $stmt->bindValue(':email', $user_email, PDO::PARAM_STR);
+        $stmt->execute();
+
+        $user_email = $stmt->fetch(PDO::FETCH_ASSOC);
+        echo '$user_email';
+        
     }
+
 }
 ?>
 
@@ -59,22 +85,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <div class="mb-4">
             <label for="name" class="block text-gray-600 font-medium mb-1">Name:</label>
             <input type="text" id="name" placeholder="Enter your name" 
-                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" name='sname' required>
+                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" name='name' required>
         </div>
 
         <!-- Email Field -->
         <div class="mb-4">
             <label for="mail" class="block text-gray-600 font-medium mb-1">Mail:</label>
-            <input type="email" id="mail" placeholder="Enter your parent's email"
+            <input type="email" id="mail" placeholder="Enter your mail address"
                 pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" name='semail' required>
+                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" name='email' required>
         </div>
 
         <!-- Password Field -->
         <div class="mb-4">
             <label for="password" class="block text-gray-600 font-medium mb-1">Password:</label>
             <input type="text" id="password" placeholder="Enter your password" 
-                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" name='spassword' required>
+                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" name='password' required>
         </div>
 
         <!-- Submit Button -->
@@ -84,9 +110,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </button>
 
         <hr>
-        <div class="mt-2">
-            <a href="./login-page.php" class="w-full block text-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
-                Already registered!
+        <div>
+            <!-- <a href="./login-page.php" class="w-full block text-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300"> -->
+            <a href="./login-page.php" class="text-center text-gray-700 hover:text-blue-600 font-bold py-2 px-4 transition duration-300">
+                <p>
+                    Already registered!
+                </p>
             </a>
         </div>
 

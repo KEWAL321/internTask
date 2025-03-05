@@ -1,11 +1,11 @@
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
+<head>
+<meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="https://cdn.tailwindcss.com"></script>
         <title>Document</title>
-    </head>
-    <body>
+</head>
+<body>
         <!-- <div class='main flex w-[95%] h-[92%] bg-gray-400 justify-left rounded-[20px]'> -->
         <div class='flex flex-row rounded-[20px] h-[100%] w-[100%] justify-center items-center'>
 
@@ -18,18 +18,9 @@
             </div>
 
             <div class='h-[90%] w-[50%] py-10 rounded-r-[16px] bg-gray-400/50 grid grid-flow-col grid-rows-3 text-center border border-black-500'>
-
-                <div class='border border-black-500'><p class='attendence border border-black-500'>Attendence</p></div>
-                <div class='border border-black-500'><p class='mail border border-black-500'>Mail</p></div>
-
-                <div class='border border-black-500'><p class='phone border border-black-500'>Phone</p></div>
-                <div class='border border-black-500'><p class='address border border-black-500'>Address</p></div>
-
-                <div class='border border-black-500'>
-                    <p class='grade border border-black-500'>Grade</p>
-                </div>
+ 
             </div>
                 
         </div>
     </body>
-    </html>
+</html>
