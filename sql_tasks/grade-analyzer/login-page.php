@@ -85,6 +85,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <?php if(!$p_exist){echo "<p style=color:red;>password doesn't match</p>";}?>
         </div>
 
+        <!-- Role Field -->
+        <div class="mb-4">
+            <label for="role" class="block text-gray-600 font-medium mb-1">Role:</label>
+                <select name="role" class="block text-gray-600 w-full">
+                    <option value="principal">principal</option>
+                    <option value="class teacher">class teacher</option>
+                    <option value="teacher">teacher</option>
+                    <option value="student">student</option>
+                </select>
+        </div>
         <!-- Submit Button -->
         <button type="submit" 
             class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300" name='submit2'>
