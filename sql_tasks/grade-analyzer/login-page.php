@@ -1,19 +1,13 @@
 <?php
 // require('./db_conn.php');
 
-$host = 'db'; 
-$username = 'root';
-$password = 'password';
-$database = 'crud';
-$u_exist = true;
-$p_exist = true;
+require_once "./connection.php";
 
-$conn = new mysqli($host,$username,$password,$database);
-// $conn = dbConn();
+$conn = Database::getConnection();
 
 // Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+if (!$conn) {
+die("Connection failed: "); 
 }
 
 // Check if the form was submitted
