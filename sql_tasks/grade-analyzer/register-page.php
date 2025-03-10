@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 echo "Error: " . $sql->errorInfo()[2];
             }
         }catch(Exception $e){
-            echo "user insertion error <br>";
+            echo "Inerstion Error: " . $sql->errorInfo()[2];
         }
 
 
@@ -51,7 +51,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             //inserting user_id fk value from user table to students table
             $role = $_POST['role'];
             $role .= 's';
-            $stmt = $conn->prepare("INSERT INTO $role (phone, address, class_id, user_id) VALUES (NULL,NULL,NULL,:user_id)");
+            switch ($role) {
+                case 'students':
+                    $stmt = $conn->prepare("INSERT INTO $role (phone, address, class_id, user_id) VALUES (NULL,NULL,NULL,:user_id)");
+                    break;
+
+                case 'teachers':
+                    $stmt = $conn->prepare("INSERT INTO $role (user_id) VALUES (:user_id)");
+                    break;
+            }
             $stmt->bindValue(':user_id',$user_id);
             $stmt->execute();
         }catch(Exception $e){
@@ -111,7 +119,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <div class="mb-4">
             <label for="role" class="block text-gray-600 font-medium mb-1">Role:</label>
             <select name="role" class="block text-gray-600 w-full">
-                <option value="class teacher">class teacher</option>
                 <option value="teacher">teacher</option>
                 <option value="student">student</option>
             </select>
