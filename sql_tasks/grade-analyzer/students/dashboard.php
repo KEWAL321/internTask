@@ -4,17 +4,16 @@ require_once "../connection.php";
 $conn = Database::getConnection();
 
 if($_SESSION['id']){
-    $stmt = $conn->prepare("SELECT * FROM students INNER JOIN users ON students.user_id=users.id WHERE students.user_id=:id");
+    $stmt = $conn->prepare("SELECT students.id,students.phone,students.address,users.name,users.email,classes.class_name FROM students INNER JOIN users ON students.user_id=users.id INNER JOIN classes ON students.class_id = classes.id WHERE students.user_id=:id");
     $stmt->bindValue(":id", $_SESSION['id']);
     $stmt->execute();
     $result = $stmt->fetch(PDO::FETCH_ASSOC); 
-    print_r($result);
 }
-// if(isset($result)){
-//     $stmt = $conn->prepare("SELECT * FROM students WHERE user_id=:user_id");
-//     $stmt->bindValue(":user_id", $results['id']);
+// if($result){
+//     $stmt = $conn->prepare('SELECT * FROM students AS s INNER JOIN classes AS c ON s.class_id=c.id WHERE s.id=:id');
+//     $stmt->bindValue(":id", $result['id']);
 //     $stmt->execute();
-//     $studentResult = $stmt->fetchAll(PDO::FETCH_ASSOC); 
+//     $result = $stmt->fetch(PDO::FETCH_ASSOC); 
 // }
 ?>
 
@@ -51,7 +50,7 @@ if($_SESSION['id']){
 
             <div class='w-[250px] h-[150px]' style="border:1px solid rgb(70,176,255)">
                 <p style="border:1px solid rgb(70,176,255)">Name</p><br>
-                <p><?php echo $results['name'];?></p>
+                <p><?php echo $result['name'];?></p>
             </div>
             <div class='w-[250px] h-[150px]' style="border:1px solid rgb(70,176,255)">
                 <p style="border:1px solid rgb(70,176,255)">Attendence</p><br>
@@ -59,19 +58,19 @@ if($_SESSION['id']){
             </div>
             <div class='w-[250px] h-[150px]' style="border:1px solid rgb(70,176,255)">
                 <p style="border:1px solid rgb(70,176,255)">Mail</p><br>
-                <p><?php echo $results['email']; ?></p>
+                <p><?php echo $result['email']; ?></p>
             </div>
             <div class='w-[250px] h-[150px]' style="border:1px solid rgb(70,176,255)">
                 <p style="border:1px solid rgb(70,176,255)">Phone</p><br>
-                <p><?php echo 9761660123; ?></p>
+                <p><?php echo $result['phone']??'Not set'?></p>
             </div>
             <div class='w-[250px] h-[150px]' style="border:1px solid rgb(70,176,255)">
                 <p style="border:1px solid rgb(70,176,255)">Address</p><br>
-                <p><?php echo 'Kathmandu, Maitidevi'; ?></p>
+                <p><?php echo $result['address']??'Not set'?></p>
             </div>
             <div class='w-[250px] h-[150px]' style="border:1px solid rgb(70,176,255)">
                 <p style="border:1px solid rgb(70,176,255)">Grade</p><br>
-                <p><?php echo 12; ?></p>
+                <p><?php echo $result['class_name']??'Not set'?></p>
             </div>
 
         </div>
