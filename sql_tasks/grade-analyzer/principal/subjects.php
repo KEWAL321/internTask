@@ -24,19 +24,18 @@ $allSubjects = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <a href="../principal/subjects.php"><p class='py-2 text-white'>Subjects</p></a>
                 <a href="../principal/requests.php"><p class='py-2 text-white'>Requests</p></a>
 
-
-
             </div>
 
             <div class='h-[90%] w-[50%] py-10 rounded-r-[16px] bg-gray-400/50 text-center'> 
             
-            <div class=" mb-5" id="btns">
+                <div class=" mb-5" id="btns">
                         <a class="px-4 py-1 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition" href='./addNewSubject.php'>Add a Subject</a>
                 </div>
 
                 <div class='flex flex-row justify-center overflow-y-auto max-h-[400px] w-full'>
                     
                 <table class="text-gray-900">
+                    
                         <thead>
                             <tr>
                                 <th>id</th>
@@ -54,10 +53,11 @@ $allSubjects = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 <td>{$subjects['name']}</td>
                                                 <td>
                                                     <form method='POST' action='deleteData.php' onsubmit='return confirm(\"Are you sure you want to delete this student?\");'>
-                                                                            <input type='hidden' name='id' value='{$subjects['id']}'>
-                                                                            <input type='hidden' name='tableName' value={$_SERVER['REQUEST_URI']}>
-                                                                            <button type='submit' style='color: red; border: none; background: none; cursor: pointer;'>Delete</button>
-                                                    </form></td>
+                                                        <input type='hidden' name='id' value='{$subjects['id']}'>
+                                                        <input type='hidden' name='tableName' value={$_SERVER['REQUEST_URI']}>
+                                                        <button type='submit' style='color: red; border: none; background: none; cursor: pointer;'>Delete</button>
+                                                    </form>
+                                                </td>
                                             </tr>
                                         ";
                                     }

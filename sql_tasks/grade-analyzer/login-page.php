@@ -1,40 +1,36 @@
 <?php
-// require('./db_conn.php');
-
 require_once "./connection.php";
-
 $conn = Database::getConnection();
-
-// Check connection
-if (!$conn) {
-die("Connection failed: "); 
-}
 
 // Check if the form was submitted
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['submit2'])) {
-        // Prepare the SQL statement (Corrected: no single quotes around column names)
-        $sql = $conn->prepare("SELECT password from student WHERE sname=?");
+        $stmt = $conn->prepare("SELECT id,name,email,role,password from users WHERE users.email=:email");
         
-        // Bind parameters (Corrected the parameter types: 'i' for integer, 's' for string)
-        $sql->bind_param("s",$_POST['sname']);
+        $stmt->bindValue(":email",$_POST['email']);
         // Execute the query
-        if (!$sql->execute()) {
-            echo "Error: " . $sql->error;
+        if (!$stmt->execute()) {
+            echo "Error: ";
         }
         else{
-            $result = $sql->get_result();
-            $row = $result->fetch_assoc();
-            if($row){
-                $password = $row['password'];
-                if($_POST['spassword']==$password){
-                    header("Location: main.php");
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+           
+            if($result){
+
+                $password = $_POST['password'];
+                if($_POST['password']==$result['password'] && $_POST['role'] == $result['role']){   
+                    $path = $_POST['role'] . 's';
+
+                    session_start();
+                    $_SESSION['id'] = $result['id'];
+                    // echo $_SESSION['id'];
+
+                    header("Location:".$path.'/dashboard.php');
+                }else{
+                    echo "<script>
+                            alert('Invalid credentials. Please try again.');
+                        </script>";
                 }
-                else{
-                    $p_exist=false;
-                }
-            }else{
-                $u_exist=false;
             }
         }
     }
@@ -44,56 +40,61 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Tailwind + Custom CSS to remove input spinners */
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        
-        input[type="number"] {
-            -moz-appearance: textfield;
-        }
+    /* Tailwind + Custom CSS to remove input spinners */
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type="number"] {
+        -moz-appearance: textfield;
+    }
     </style>
 </head>
+
 <body class="flex justify-center items-center h-screen bg-gray-100">
-    <form class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md" action='<?php echo htmlspecialchars($_SERVER['PHP_SELF'])?>' method='post'>
+    <form class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md"
+        action='<?php echo htmlspecialchars($_SERVER['PHP_SELF'])?>' method='post'>
         <h2 class="text-2xl font-bold text-center text-gray-700 mb-6">Login!</h2>
 
-        <!-- Name Field -->
+        <!-- Email Field -->
         <div class="mb-4">
-            <label for="name" class="block text-gray-600 font-medium mb-1">Name:</label>
-            <input type="text" id="name" placeholder="Enter your name" 
-                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" name='sname' required>
-            <?php if(!$u_exist){echo "<p style=color:red;>username doesn't exists</p>";}?>
+            <label for="email" class="block text-gray-600 font-medium mb-1">Email:</label>
+            <input type="text" id="email" placeholder="Enter your Email"
+                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                name='email' required>
         </div>
-        
+
         <!-- Password Field -->
         <div class="mb-4">
             <label for="password" class="block text-gray-600 font-medium mb-1">Password:</label>
-            <input type="text" id="password" placeholder="Enter your password" 
-            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" name='spassword' required>
-            <?php if(!$p_exist){echo "<p style=color:red;>password doesn't match</p>";}?>
+            <input type="text" id="password" placeholder="Enter your password"
+                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                name='password' required>
         </div>
 
         <!-- Role Field -->
         <div class="mb-4">
             <label for="role" class="block text-gray-600 font-medium mb-1">Role:</label>
-                <select name="role" class="block text-gray-600 w-full">
-                    <option value="principal">principal</option>
-                    <option value="class teacher">class teacher</option>
-                    <option value="teacher">teacher</option>
-                    <option value="student">student</option>
-                </select>
+            <select name="role" class="block text-gray-600 w-full">
+                <option value="principal">principal</option>
+                <option value="class teacher">class teacher</option>
+                <option value="teacher">teacher</option>
+                <option value="student">student</option>
+            </select>
         </div>
         <!-- Submit Button -->
-        <button type="submit" 
-            class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300" name='submit2'>
+        <button type="submit"
+            class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
+            name='submit2'>
             Login
         </button>
     </form>
 </body>
+
 </html>
