@@ -9,7 +9,6 @@ if(isset($_GET['id'])){
     $stmt->execute();
     $class = $stmt->fetch(PDO::FETCH_ASSOC);
     //Fetch all listable subjects
-    // $stmt = $conn->prepare('SELECT id,name FROM subjects');
     $stmt = $conn->prepare('SELECT subjects.id,subjects.name FROM subjects 
                                     WHERE subjects.id NOT IN (
                                     SELECT classes_subjects.subject_id 
@@ -53,7 +52,6 @@ if ($_SERVER["REQUEST_METHOD"] == 'POST' && isset($_POST['subjectToClass'])) {
 </head>
 
 <body>
-    <!-- <div class='main flex w-[95%] h-[92%] bg-gray-400 justify-left rounded-[20px]'> -->
     <div class='flex flex-row rounded-[20px] h-[100%] w-[100%] justify-center items-center'>
 
         <div class='dashboard text-center w-[30%] h-[90%] py-10 rounded-l-[16px] border border-black-500'
@@ -106,6 +104,7 @@ if ($_SERVER["REQUEST_METHOD"] == 'POST' && isset($_POST['subjectToClass'])) {
 
 
                 <!-- Submit Button -->
+
                 <button type="submit"
                     class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 mt-2"
                     name='subjectToClass'>
@@ -137,7 +136,7 @@ if ($_SERVER["REQUEST_METHOD"] == 'POST' && isset($_POST['subjectToClass'])) {
                                                     <tr>
                                                         <td>{$class_subject['name']}</td>
                                                         <td>
-                                                            <form method='POST' action='deleteData.php' onsubmit='return confirm(\"Are you sure you want to delete this student?\");'>
+                                                            <form method='POST' action='deleteData.php');'>
                                                                 <input type='hidden' name='class_id' value='{$class_subject['class_id']}'>
                                                                 <input type='hidden' name='subject_id' value='{$class_subject['subject_id']}'>
                                                                 <input type='hidden' name='tableName' value={$_SERVER['REQUEST_URI']}>

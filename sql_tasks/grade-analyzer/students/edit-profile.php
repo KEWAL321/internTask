@@ -4,18 +4,8 @@ require_once "../connection.php";
 $conn = Database::getConnection();
 
 if($_SESSION['id']){
-//subjects from students id
-    // $stmt = $conn->prepare("SELECT s.names, FROM student AS st INNER JOIN classes_subjects AS cs
-    //                                 ON st.class_id = cs.class_id INNER JOIN subjects AS s
-    //                                 ON cs.subject_id=s.id 
-    //                                 WHERE st.id=:id");
-
-    // $stmt = $conn->prepare("SELECT c.class_name FROM students AS st INNER JOIN classes AS c
-    //                                 ON st.class_id = c.id 
-    //                                 WHERE st.id=:id");
     $stmt = $conn->prepare("SELECT id,class_name FROM classes");
 
-    // $stmt->bindValue(":id", $_SESSION['id']);
     $stmt->execute();
     $classes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -30,11 +20,12 @@ if($_SERVER["REQUEST_METHOD"] == 'POST' && isset( $_POST['submit'] )) {
     $stmt = $conn->prepare("UPDATE students SET phone=:phone,address=:address,class_id=:class_id WHERE id=:id");
     $stmt->bindValue(":phone",$_POST['phone']);
     $stmt->bindValue(":address",$_POST['address']);
-    $stmt->bindValue(":class_id",$_POST['class_id']);
+    $stmt->bindValue(":class_id", $_POST['class_id'] ?? NULL);
+
     $stmt->bindValue(":id",$student['id']);
     $stmt->execute();
-    // header("Location: ./dashboard.php");
-    // exit();
+    header("Location: ./dashboard.php");
+    exit();
 }   
 ?>
 
@@ -103,6 +94,7 @@ if($_SERVER["REQUEST_METHOD"] == 'POST' && isset( $_POST['submit'] )) {
                     <label for="class" class="block text-gray-600 font-medium mb-1">Class:</label>
                     <select name="class_id" id="class" class="w-full">
 
+                        <option>None</option>
                         <?php
                         foreach($classes as $class){
                             echo '

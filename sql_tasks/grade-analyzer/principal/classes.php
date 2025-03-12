@@ -1,14 +1,6 @@
 <?php require_once "../connection.php" ;
 $conn = Database::getConnection();
-// $stmt = $conn->prepare("SELECT c.id FROM classes AS c INNER JOIN teachers AS t ON c.teacher_id = t.id INNER JOIN users AS u ON t.user_id = u.id");
-// $stmt = $conn->prepare("SELECT * FROM classes AS c INNER JOIN teachers AS t ON c.teacher_id = t.id INNER JOIN users AS u ON t.user_id = u.id");
-// $stmt = $conn->prepare("SELECT * FROM classes");
-// $stmt = $conn->prepare("SELECT c.id,c.class_name, u.name FROM teachers AS c 
-//                         INNER JOIN users AS u
-//                         ON t.user_id = u.id
-//                         LEFT JOIN classes AS c
-//                         ON c.teacher_id = t.id")
-//                         ;
+                 ;
 $stmt = $conn->prepare("SELECT c.id,c.class_name, u.name FROM classes AS c 
                         LEFT JOIN teachers AS t
                         ON c.teacher_id = t.id 
@@ -82,32 +74,12 @@ $allClasses = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <tr>
                             <?php
                                             foreach ($allClasses as $class) {
-                                                // $stmt = $conn->prepare("SELECT * FROM teachers INNER JOIN classes on teachers.id = classes.teacher_id WHERE teachers.id=class['teacher_id]");
-
-                                                // echo "
-                                                //     <tr>
-                                                //         <td>{$class['id']}</td>
-                                                //         <td>
-                                                //             <form action='" . htmlspecialchars($_SERVER['PHP_SELF']) . "?class=" . urlencode($class['class_name']) . "' method='POST'>
-                                                //                 <button type='submit'>{$class['class_name']}</button>
-                                                //             </form>
-                                                //         </td>
-                                                //         <td style='color:gray;'>" . ($class['name'] ?? 'Not Set') . "</td>
-                                                //         <td>
-                                                //             <form method='POST' action='deleteData.php' onsubmit='return confirm(\"Are you sure you want to delete this student?\");'    >
-                                                //                 <input type='hidden' name='id' value='{$class['id']}'>
-                                                //                 <input type='hidden' name='tableName' value='" . htmlspecialchars($_SERVER['REQUEST_URI']) . "'>
-                                                //                 <button type='submit' style='color: red; border: none; background: none; cursor: pointer;'>Delete</button>
-                                                //             </form>
-                                                //         </td>
-                                                //     </tr>
-                                                // ";
 
                                                 echo "
                                                         <tr>
                                                             <td>{$class['id']}</td>
                                                             <td>
-                                                                <a href='./subjectToClass.php?id=$class[id]'>{$class['class_name']}</a>
+                                                                <a href='./classes_subjects.php?id=$class[id]'>{$class['class_name']}</a>
                                                             </td>
                                                             <td style='color:gray;'>" . ($class['name'] ?? 'Not Set') . "</td>
                                                             <td>

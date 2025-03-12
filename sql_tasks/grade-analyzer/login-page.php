@@ -2,6 +2,9 @@
 require_once "./connection.php";
 $conn = Database::getConnection();
 
+session_start();
+
+
 // Check if the form was submitted
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['submit2'])) {
@@ -18,12 +21,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if($result){
 
                 $password = $_POST['password'];
-                if($_POST['password']==$result['password'] && $_POST['role'] == $result['role']){   
-                    $path = $_POST['role'] . 's';
+                if($_POST['password']==$result['password'] && $_POST['role'] == $result['role']){ 
 
-                    session_start();
+                    $path =  ($_POST['role']=='principal')?$_POST['role']:$_POST['role'] . 's';
                     $_SESSION['id'] = $result['id'];
-                    // echo $_SESSION['id'];
 
                     header("Location:".$path.'/dashboard.php');
                 }else{
